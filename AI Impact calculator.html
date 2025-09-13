@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Sustainability Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+        }
+        .container {
+            max-width: 800px;
+        }
+        .result-box {
+            background-color: #1e293b;
+            border-left: 4px solid #6366f1;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .input-group label {
+            color: #94a3b8;
+        }
+        .input-group select, .input-group input {
+            background-color: #334155;
+            color: #e2e8f0;
+            border: 1px solid #475569;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center p-4">
+    <div class="container bg-slate-800 p-8 rounded-2xl shadow-2xl space-y-8">
+        <header class="text-center">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-white mb-2">AI Impact Calculator</h1>
+            <p class="text-slate-400 text-lg">Estimate the environmental impact of your AI usage.</p>
+        </header>
+
+        <main class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="input-group flex flex-col space-y-2">
+                    <label for="llm-select" class="text-sm font-medium">Select an LLM</label>
+                    <select id="llm-select" class="p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+                        <option value="Gemini">Google Gemini</option>
+                        <option value="ChatGPT">ChatGPT</option>
+                        <option value="Grok">Grok</option>
+                        <option value="Claude">Claude</option>
+                        <option value="Perplexity">Perplexity AI</option>
+                        <option value="Deepseek">Deepseek-R1</option>
+                    </select>
+                </div>
+
+                <div class="input-group flex flex-col space-y-2">
+                    <label for="prompt-type-select" class="text-sm font-medium">Select Prompt Type</label>
+                    <select id="prompt-type-select" class="p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+                        <option value="text-short">Short Text Generation</option>
+                        <option value="text-long">Long Text Generation (e.g., report, summary)</option>
+                        <option value="image-video">Image / Video Generation</option>
+                    </select>
+                </div>
+
+                <div class="input-group flex flex-col space-y-2">
+                    <label for="prompts-per-day" class="text-sm font-medium">Prompts per Day</label>
+                    <input type="number" id="prompts-per-day" value="10" min="1" class="p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+                </div>
+            </div>
+
+            <button id="calculate-button" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-200 shadow-md transform hover:scale-105">
+                Calculate Impact
+            </button>
+
+            <div id="results" class="hidden mt-8 space-y-4">
+                <div class="text-center">
+                    <h2 class="text-2xl font-bold text-white">Your Estimated Daily Impact</h2>
+                    <p class="text-slate-400">Estimated figures are based on the publicly available data.</p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center mb-6">
+                    <div class="result-box p-6 rounded-xl flex flex-col items-center">
+                        <span class="text-2xl font-bold text-indigo-400" id="energy-result">0</span>
+                        <span class="text-slate-400 mt-1 text-sm">Energy Consumption (Wh)</span>
+                    </div>
+                    <div class="result-box p-6 rounded-xl flex flex-col items-center">
+                        <span class="text-2xl font-bold text-indigo-400" id="carbon-result">0</span>
+                        <span class="text-slate-400 mt-1 text-sm">Carbon Emissions (gCO2 e)</span>
+                    </div>
+                    <div class="result-box p-6 rounded-xl flex flex-col items-center">
+                        <span class="text-2xl font-bold text-indigo-400" id="water-result">0</span>
+                        <span class="text-slate-400 mt-1 text-sm">Water Consumption (mL)</span>
+                    </div>
+                </div>
+
+                <hr class="border-t border-slate-700">
+
+                <div class="text-center pt-4">
+                    <h3 class="text-xl font-bold text-white">Impact Equivalents</h3>
+                    <p class="text-slate-400 text-sm">To put these numbers in perspective, your daily usage is equivalent to:</p>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="bg-slate-700 p-4 rounded-lg flex justify-between items-center">
+                        <span class="text-slate-300">Your daily usage is equivalent to:</span>
+                        <span class="text-white font-medium" id="carbon-equivalent">0 minutes of a 65'' television watched</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Data from the provided document "The AI Sustainability Imperative.pdf"
+        // All values are estimates and for comparative purposes as noted in the document.
+        const impactData = {
+            'Gemini': {
+                'text-short': { energy: 0.24, carbon: 0.03, water: 0.26 },
+                'text-long': { energy: 4.8, carbon: 0.6, water: 2.6 },
+                'image-video': { energy: 10, carbon: 1.25, water: 10.83 }
+            },
+            'ChatGPT': {
+                'text-short': { energy: 0.32, carbon: 2.5, water: 0.35 },
+                'text-long': { energy: 15, carbon: 2, water: 15 },
+                'image-video': { energy: 12, carbon: 1.5, water: 13 }
+            },
+            'Grok': {
+                'text-short': { energy: 2.5, carbon: 2, water: 2.5 },
+                'text-long': { energy: 50, carbon: 10, water: 50 },
+                'image-video': { energy: 20, carbon: 2.5, water: 21.6 }
+            },
+            'Claude': {
+                'text-short': { energy: 1.0, carbon: 2, water: 1.0 },
+                'text-long': { energy: 20, carbon: 4, water: 20 },
+                'image-video': { energy: 15, carbon: 1.875, water: 16.25 }
+            },
+            'Perplexity': {
+                'text-short': { energy: 0.3, carbon: 2, water: 0.3 },
+                'text-long': { energy: 10, carbon: 2.5, water: 10 },
+                'image-video': { energy: 12, carbon: 1.5, water: 13 }
+            },
+            'Deepseek': {
+                'text-short': { energy: 33, carbon: 4, water: 33 },
+                'text-long': { energy: 60, carbon: 8, water: 60 },
+                'image-video': { energy: 50, carbon: 6.25, water: 54.15 }
+            }
+        };
+
+        // Constants for impact equivalents
+        const WH_PER_PHONE_CHARGE = 10; // A typical smartphone charge
+        // Based on a 55gCO2e per hour estimate for a large television.
+        const G_CO2_PER_65_INCH_TV_MINUTE = 55 / 60; 
+
+        const calculateButton = document.getElementById('calculate-button');
+        const resultsDiv = document.getElementById('results');
+
+        calculateButton.addEventListener('click', () => {
+            const llm = document.getElementById('llm-select').value;
+            const promptType = document.getElementById('prompt-type-select').value;
+            const promptsPerDay = parseInt(document.getElementById('prompts-per-day').value, 10);
+
+            if (isNaN(promptsPerDay) || promptsPerDay <= 0) {
+                // Using a custom modal instead of alert()
+                const modal = document.createElement('div');
+                modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4';
+                modal.innerHTML = `
+                    <div class="bg-slate-800 p-6 rounded-lg shadow-lg text-center max-w-sm">
+                        <p class="text-white text-lg mb-4">Please enter a valid number of prompts (greater than 0).</p>
+                        <button class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg" onclick="this.parentElement.parentElement.remove()">OK</button>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+                return;
+            }
+
+            const selectedData = impactData[llm][promptType];
+
+            const totalEnergy = (selectedData.energy * promptsPerDay);
+            const totalCarbon = (selectedData.carbon * promptsPerDay);
+            const totalWater = (selectedData.water * promptsPerDay); 
+
+            document.getElementById('energy-result').textContent = totalEnergy.toFixed(2);
+            document.getElementById('carbon-result').textContent = totalCarbon.toFixed(2);
+            document.getElementById('water-result').textContent = totalWater.toFixed(2); 
+
+            // Calculate and display equivalents
+            const carbonEquivalent = totalCarbon / G_CO2_PER_65_INCH_TV_MINUTE;
+
+            document.getElementById('carbon-equivalent').textContent = `${Math.round(carbonEquivalent)} minutes of a 65'' television watched`;
+
+            resultsDiv.classList.remove('hidden');
+        });
+    </script>
+</body>
+</html>
